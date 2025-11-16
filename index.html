@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aura Counter</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body {
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background-color:#121212;
+    color:#fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.container {
+    text-align:center;
+    width:90%;
+    max-width:600px;
+}
+h1 {
+    font-size:3rem;
+    margin-bottom:2rem;
+    font-weight:700;
+}
+textarea {
+    width:100%;
+    padding:15px;
+    font-size:1.1rem;
+    border-radius:12px;
+    border:none;
+    resize:none;
+    margin-bottom:20px;
+    background-color:#1e1e1e;
+    color:#fff;
+}
+textarea:focus {outline:2px solid #00ff88;}
+button {
+    padding:12px 30px;
+    font-size:1.1rem;
+    border-radius:12px;
+    border:none;
+    cursor:pointer;
+    background-color:#00ff88;
+    color:#121212;
+    font-weight:600;
+    margin-top:10px;
+}
+button:hover {background-color:#00cc66;}
+#result {font-size:4rem;font-weight:700;margin-top:3rem;transition:all 0.5s;}
+#resetBtn {margin-top:2rem;background-color:#ff5555;color:#fff;}
+#resetBtn:hover {background-color:#cc4444;}
+</style>
+</head>
+<body>
+<div class="container" id="inputSection">
+    <h1>Aura Counter</h1>
+    <textarea id="avvenimento" placeholder="Scrivi il tuo avvenimento..."></textarea><br>
+    <button onclick="calcolaAura()">Valuta</button>
+</div>
+
+<div class="container" id="resultSection" style="display:none;">
+    <div id="result"></div>
+    <button id="resetBtn" onclick="resetPage()">Calcola di nuovo</button>
+</div>
+
+<script>
+function calcolaAura() {
+    const testo = document.getElementById("avvenimento").value.toLowerCase().split(/\s+/);
+
+    // Parole chiave
+    const strongWords = {
+        "milionario": 800000,
+        "10/10": 420000,
+        "vincere": 50000,
+        "ghostato": -65000,
+        "fallito": -50000,
+        "trionfo": 70000,
+        "epico": 80000,
+        "sfortunato": -50000,
+        "amore": 50000
+    };
+
+    const positiveWords = {
+        "felice": 30000,
+        "gioia": 30000,
+        "bravo": 20000,
+        "premio": 60000,
+        "eccellente": 70000,
+        "vittoria": 60000,
+        "fortunato": 35000,
+        "successo": 70000,
+        "superato": 50000,
+        "promosso": 60000
+    };
+
+    const negativeWords = {
+        "triste": -40000,
+        "deluso": -35000,
+        "male": -20000,
+        "perduto": -50000,
+        "problema": -30000,
+        "arrabbiato": -25000,
+        "odio": -60000,
+        "sbagliato": -30000,
+        "caduto": -18500,
+        "scompiglia": -12000,
+        "errori": -40000
+    };
+
+    const intensifiers = ["molto","super","incredibile","estremamente"];
+    const negations = ["non","mai","nessuno"];
+
+    let punteggio = 0;
+    let negateNext = false;
+
+    for (let i=0; i<testo.length; i++){
+        let word = testo[i];
+        let multiplier = 1;
+
+        // Controllo negazioni
+        if(negations.includes(word)) { negateNext = true; continue; }
+
+        // Controllo intensificatori
+        if(intensifiers.includes(word)) { multiplier = 2; continue; }
+
+        let val = 0;
+        if(strongWords[word]) val = strongWords[word];
+        else if(positiveWords[word]) val = positiveWords[word];
+        else if(negativeWords[word]) val = negativeWords[word];
+
+        if(negateNext) val = -val;
+        negateNext = false;
+
+        punteggio += val * multiplier;
+    }
+
+    // Influenza lunghezza
+    punteggio += testo.length * 500;
+
+    // Limiti
+    if(punteggio > 1000000) punteggio = 1000000;
+    if(punteggio < -1000000) punteggio = -1000000;
+
+    // Arrotonda a 100
+    punteggio = Math.round(punteggio/100)*100;
+
+    // Mostra risultato
+    document.getElementById("inputSection").style.display="none";
+    const resultDiv = document.getElementById("result");
+    resultDiv.textContent = punteggio.toLocaleString()+" Punti AURA";
+    resultDiv.style.color = punteggio>=0?"#00ff88":"#ff5555";
+    document.getElementById("resultSection").style.display="block";
+}
+
+function resetPage(){
+    document.getElementById("avvenimento").value="";
+    document.getElementById("inputSection").style.display="block";
+    document.getElementById("resultSection").style.display="none";
+}
+</script>
+</body>
+</html>
