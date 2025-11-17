@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aura Counter V4 - Analisi Profonda</title>
+<style>
+    body {
+        margin:0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #000000;
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+    .container {
+        width: 100%;
+        max-width: 700px;
+        background-color: #111;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        text-align: center;
+    }
+    h1 {
+        font-size: 3em;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+    textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 20px;
+        font-size: 18px;
+        border-radius: 15px;
+        border: 2px solid #555;
+        background-color: #222;
+        color: #fff;
+        resize: vertical;
+    }
+    textarea:focus {
+        border-color: #2ecc71;
+        outline: none;
+    }
+    button {
+        margin-top: 20px;
+        width: 100%;
+        padding: 18px;
+        font-size: 20px;
+        border-radius: 15px;
+        border: none;
+        background-color: #2ecc71;
+        color: #000;
+        cursor: pointer;
+        font-weight: bold;
+        transition: transform 0.2s, background-color 0.3s;
+    }
+    button:hover {
+        transform: translateY(-3px);
+        background-color: #27ae60;
+    }
+    #risultato {
+        margin-top: 30px;
+        font-size: 50px;
+        font-weight: bold;
+        padding: 20px;
+        border-radius: 15px;
+    }
+    .positivo { color: #2ecc71; }
+    .negativo { color: #e74c3c; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Aura Counter</h1>
+<textarea id="fraseInput" placeholder="Scrivi qui la tua frase..."></textarea>
+<button onclick="calcolaAura()">Valuta</button>
+<div id="risultato"></div>
+<button onclick="resetta()" style="margin-top:15px; background-color:#555; color:#fff;">Calcola di nuovo</button>
+</div>
+
+<script>
+// --- Algoritmo complesso integrato ---
+// Dizionario parole chiave
+const DIZIONARIO_IMPATTO_TK = {
+'leggenda':10,'mitico':10,'power move':10,'king':10,'giga':9,'clutcharla':9,'epico':9,'irreale':9,
+'mossa da king':10,'peak':9,'top':8,'glow up':8,'successo':8,'vincente':8,'bomba':8,'pazzesco':8,'assurdo':7,
+'sculare':7,'gasato':7,'upgrade':6,'flexare':6,'rispettato':6,'pullappato':7,'gassato':7,'mosse giga':7,'apparso':6,
+'skillato':6,'fortuna':6,'ottimo':5,'cringe':-8,'ghostato':-8,'palo':-8,'rifiuto':-8,'sbroccato':-7,'bruttata':-7,
+'figuraccia':-8,'flop':-6,'floppato':-6,'instaffabile':-6,'sad':-5,'messo male':-6,'tilt':-5,'nervy':-5,
+'sculo assurdo':-7,'chiusura':-7,'male':-5,'tilt totale':-10,'umiliazione pubblica':-10,'figura di merda':-10,
+'disastro':-9,'disintegrato':-9,'distrutto':-9,'umiliazione':-9,'mossa da pagliaccio':-9,'rovinato':-9,'devastante':-10,
+'raro':2,'quotidiano':0,'poco':-1,'molto':1,'troppo':-1,'sempre':0,'solo':-1
+};
+const PONDERAZIONE_DOMINIO={sentimentale:5.0,sociale:4.5,casuale:4.0,personale:3.5,quotidiano:1.5,lavoro_studio:3.0};
+const PUNTEGGIO_EMOTIVO_TONO={'euforia':5,'gasamento':5,'esaltato':5,'entusiasmo':5,'orgoglio':4,'felice':4,'divertito':3,'eccitato':4,
+'disperazione':-5,'distrutto':-5,'tristezza':-4,'abbattuto':-4,'stanco':-3,'arrabbiato':-3,'ironia':-2,'amaro':-3,'indifferente':0};
+
+function normalizzaFrase(f){return f.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g,"").replace(/\s{2,}/g," ").replace('cmq','comunque').replace('xké','perché').replace('nn','non').replace('qnd','quando').replace('k','che').trim()}
+function analizzaDominioContesto(f){
+let d='quotidiano'; let FD=PONDERAZIONE_DOMINIO[d];
+const s=['crush','ragazza','ragazzo','relazione','chiusura','appuntamento','droppo','amore','cuore','fidanzato','ex','coppia','singol'];
+const so=['pubblico','status','gente','amici','gruppo','dissing','reputazione','immagine','followers','social'];
+const c=['fortuna','sfiga','sculo','evento raro','caso','destino','estrazione','lotto','botta di culo'];
+const p=['vittoria','obiettivo','esame','lavoro','goal','promozione','challenge','gara','sport'];
+if(s.some(k=>f.includes(k))){d='sentimentale';FD=PONDERAZIONE_DOMINIO[d];}
+else if(so.some(k=>f.includes(k))){d='sociale';FD=PONDERAZIONE_DOMINIO[d];}
+else if(c.some(k=>f.includes(k))){d='casuale';FD=PONDERAZIONE_DOMINIO[d];}
+else if(p.some(k=>f.includes(k))){d='personale';FD=PONDERAZIONE_DOMINIO[d];}
+return {dominio:d,FD:FD}
+}
+function analizzaTonoIronia(f,S_base_iniziale){
+let PE=0,PT=0,isIronico=false;
+for(const [k,v] of Object.entries(PUNTEGGIO_EMOTIVO_TONO)){if(f.includes(k)||f.includes(k.replace(/[aeiou]$/i,''))){PE=v;PT=Math.abs(v);}}
+if(PE<-3 && S_base_iniziale>5){isIronico=true;}
+else if(PE>3 && S_base_iniziale<-5){isIronico=true;PE*=0.5;}
+return {PE,isIronico,PT}
+}
+
+function calcolaAura(){
+let frase=document.getElementById('fraseInput').value;
+let r=document.getElementById('risultato');
+if(frase.trim()===""){r.innerHTML="❌ Inserisci una frase valida";r.className='';return;}
+let fp=normalizzaFrase(frase),p=fp.split(' ');
+let sommaTK=0,intensitaI=1;
+for(const w of p){if(DIZIONARIO_IMPATTO_TK[w]!==undefined){sommaTK+=DIZIONARIO_IMPATTO_TK[w];intensitaI=Math.max(intensitaI,Math.abs(DIZIONARIO_IMPATTO_TK[w]));}}
+let {FD}=analizzaDominioContesto(fp);
+let S_base_iniziale=sommaTK;
+let {PE,isIronico,PT}=analizzaTonoIronia(fp,S_base_iniziale);
+let S_base=S_base_iniziale+PE;
+if(isIronico){if(S_base_iniziale>0 && S_base<0){S_base=-Math.abs(S_base_iniziale)*(FD/2);intensitaI=Math.max(intensitaI,8);}else if(S_base_iniziale<0 && S_base>0){S_base=S_base_iniziale*0.7+PE;}}
+let Mgrezzo=intensitaI*Math.abs(S_base)*FD;
+let PA_iniziale=0;
+if(Mgrezzo>0){PA_iniziale=80*Math.pow(Mgrezzo,1.9);if(fp.includes('raro')||fp.includes('eccezionale')){PA_iniziale*=1.25;}PA_iniziale+=PA_iniziale*(PT/15);}
+let segno=S_base>=0?1:-1;
+let PA_finale=segno*PA_iniziale;
+let PuntiAura=Math.round(PA_finale/100)*100;
+PuntiAura=Math.min(1000000,Math.max(-1000000,PuntiAura));
+r.innerHTML=PuntiAura.toLocaleString('it-IT');
+r.className=PuntiAura>0?'positivo':'negativo';
+}
+
+function resetta(){document.getElementById('fraseInput').value='';document.getElementById('risultato').innerHTML='';document.getElementById('risultato').className='';}
+</script>
+</body>
+</html>
